@@ -1,0 +1,86 @@
+<?php
+/**
+ * @file
+ * Code for the BrowserSync module.
+ */
+
+/**
+ * Implements hook_css_alter().
+ *
+ * BrowserSync does not work with CSS import so we need to force Drupal to embed
+ * CSS files as <link> elements.
+ *
+ * @see https://github.com/shakyShane/browser-sync/issues/10
+ */
+function browsersync_css_alter(&$css) {
+  if (browser_sync_is_enabled() && !variable_get('preprocess_css')) {
+    foreach ($css as $key => $value) {
+      // Skip core files.
+      $is_core = (strpos($value['data'], 'misc/') === 0 || strpos($value['data'], 'modules/') === 0);
+      if (!$is_core && file_exists($value['data'])) {
+        $css[$key]['preprocess'] = FALSE;
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_page_build().
+ *
+ * We are using this hook to add the BrowserSync snippet to the bottom of the
+ * page.
+ */
+function browsersync_page_build(&$page) {
+  if (browser_sync_is_enabled()) {
+    $page['page_bottom']['devel'] = array(
+      '#markup' => browsersync_get_snippet(),
+      '#weight' => variable_get('browsersync_snippet_weight', 100),
+    );
+  }
+}
+
+
+/**
+ * Helper that returns whether BrowserSync is enabled for a given path.
+ *
+ * @param string $path
+ *   (optional) The path to check (defaults to the current path).
+ *
+ * @return bool
+ *   TRUE or FALSE, depending on whether BrowserSync is enabled.
+ */
+function browser_sync_is_enabled($path = '') {
+  // Define a fallback for the path.
+  if ($path == '') {
+    $path = current_path();
+  }
+
+  // Determine whether BrowserSync is enabled.
+  if (path_is_admin($path)) {
+    $status = variable_get('browsersync_enabled_for_admin', FALSE);
+  }
+  else {
+    $status = variable_get('browsersync_enabled_for_nonadmin', FALSE);
+  }
+
+  return $status;
+}
+
+
+/**
+ * Helper that returns a snippet as required by BrowserSync.
+ */
+function browsersync_get_snippet() {
+  // Retrieve the BrowserSync config variables.
+  $browsersync_socket_address = variable_get('browsersync_socket_address', '127.0.0.1');
+  $browsersync_socket_port = variable_get('browsersync_socket_port', '3001');
+  $browsersync_client_port = variable_get('browsersync_client_port', '3002');
+
+  // BrowserSync snippet.
+  $markup = '<script src="//' . $browsersync_socket_address . ':' . $browsersync_socket_port . '/socket.io/socket.io.js"></script>';
+  $markup .= '<script>var ___socket___ = io.connect("http://' . $browsersync_socket_address . ':' . $browsersync_socket_port . '");</script>';
+  $markup .= '<script src="//' . $browsersync_socket_address . ':' . $browsersync_client_port . '/client/browser-sync-client.0.6.2.js"></script>';
+
+  return $markup;
+}
