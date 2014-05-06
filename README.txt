@@ -20,6 +20,9 @@ CONFIGURATION
 To configure this module you are required to add some configuration variables
 to your settings.php file:
 
+// Version of BrowserSync used (eg. 0.6.2).
+$conf['browsersync_version'] = '0.6.2';
+
 // Whether the snippet needs be added to non-admin pages.
 $conf['browsersync_enabled_for_nonadmin'] = TRUE;
 
