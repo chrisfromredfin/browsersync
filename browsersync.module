@@ -78,14 +78,14 @@ function browsersync_get_snippet() {
   $browsersync_socket_port = variable_get('browsersync_socket_port', '3001');
   $browsersync_client_port = variable_get('browsersync_client_port', '3002');
 
-  // BrowserSync snippet.
-  $markup = '';
-
+  // If a version is specified, prefix it with a dot.
   if ($browsersync_version) {
-    $markup = '<script src="//' . $browsersync_socket_address . ':' . $browsersync_socket_port . '/socket.io/socket.io.js"></script>';
-    $markup .= '<script>var ___socket___ = io.connect("http://' . $browsersync_socket_address . ':' . $browsersync_socket_port . '");</script>';
-    $markup .= '<script src="//' . $browsersync_socket_address . ':' . $browsersync_client_port . '/client/browser-sync-client.' . $browsersync_version . '.js"></script>';
+    $browsersync_version = '.' . $browsersync_version;
   }
+
+  $markup = '<script src="//' . $browsersync_socket_address . ':' . $browsersync_socket_port . '/socket.io/socket.io.js"></script>';
+  $markup .= '<script>var ___socket___ = io.connect("http://' . $browsersync_socket_address . ':' . $browsersync_socket_port . '");</script>';
+  $markup .= '<script src="//' . $browsersync_socket_address . ':' . $browsersync_client_port . '/client/browser-sync-client' . $browsersync_version . '.js"></script>';
 
   return $markup;
 }

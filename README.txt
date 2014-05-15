@@ -9,7 +9,7 @@ Here is an example of the JavaScript snippet required by BrowserSync:
 
 <script src='//127.0.0.1:3001/socket.io/socket.io.js'></script>
 <script>var ___socket___ = io.connect('http://127.0.0.1:3001');</script>
-<script src='//127.0.0.1:3002/client/browser-sync-client.0.6.2.js'></script>
+<script src='//127.0.0.1:3002/client/browser-sync-client.0.9.1.js'></script>
 
 Please note that this module DOES NOT run BrowserSync for you. You will still
 need to run it from the command line.
@@ -20,8 +20,8 @@ CONFIGURATION
 To configure this module you are required to add some configuration variables
 to your settings.php file:
 
-// Version of BrowserSync used (eg. 0.6.2).
-$conf['browsersync_version'] = '0.6.2';
+// Version of BrowserSync used (eg. 0.9.1). Optional as of BrowserSync 0.7.0.
+$conf['browsersync_version'] = '0.9.1';
 
 // Whether the snippet needs be added to non-admin pages.
 $conf['browsersync_enabled_for_nonadmin'] = TRUE;
