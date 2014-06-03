@@ -5,6 +5,21 @@
  */
 
 /**
+ * Implements hook_permission().
+ *
+ * Ensures the user has permission to use BrowserSync.
+ */
+function browsersync_permission() {
+  return array(
+    'use browsersync' => array(
+      'title' => t('Use BrowserSync'),
+      'description' => t('BrowserSync script will only be included for these users.'),
+    ),
+  );
+}
+
+
+/**
  * Implements hook_css_alter().
  *
  * BrowserSync does not work with CSS import so we need to force Drupal to embed
@@ -13,7 +28,7 @@
  * @see https://github.com/shakyShane/browser-sync/issues/10
  */
 function browsersync_css_alter(&$css) {
-  if (browser_sync_is_enabled() && !variable_get('preprocess_css')) {
+  if (browsersync_is_active() && !variable_get('preprocess_css')) {
     foreach ($css as $key => $value) {
       // Skip core files.
       $is_core = (strpos($value['data'], 'misc/') === 0 || strpos($value['data'], 'modules/') === 0);
@@ -32,17 +47,16 @@ function browsersync_css_alter(&$css) {
  * page.
  */
 function browsersync_page_build(&$page) {
-  if (browser_sync_is_enabled()) {
-    $page['page_bottom']['devel'] = array(
-      '#markup' => browsersync_get_snippet(),
-      '#weight' => variable_get('browsersync_snippet_weight', 100),
-    );
-  }
+  $page['page_bottom']['browsersync'] = array(
+    '#markup' => browsersync_get_snippet(),
+    '#weight' => variable_get('browsersync_snippet_weight', 100),
+    '#access' => browsersync_is_active(),
+  );
 }
 
 
 /**
- * Helper that returns whether BrowserSync is enabled for a given path.
+ * Returns whether BrowserSync is enabled for a given path.
  *
  * @param string $path
  *   (optional) The path to check (defaults to the current path).
@@ -50,7 +64,7 @@ function browsersync_page_build(&$page) {
  * @return bool
  *   TRUE or FALSE, depending on whether BrowserSync is enabled.
  */
-function browser_sync_is_enabled($path = '') {
+function browsersync_is_enabled($path = '') {
   // Define a fallback for the path.
   if ($path == '') {
     $path = current_path();
@@ -69,7 +83,21 @@ function browser_sync_is_enabled($path = '') {
 
 
 /**
- * Helper that returns a snippet as required by BrowserSync.
+ * Determines access for the use of BrowserSync.
+ *
+ * @param string $path
+ *   (optional) The path to check (defaults to the current path).
+ *
+ * @return bool
+ *   TRUE or FALSE, depending on whether BrowserSync is active.
+ */
+function browsersync_is_active($path = '') {
+  return user_access('use browsersync') && browsersync_is_enabled($path);
+}
+
+
+/**
+ * Returns a snippet as required by BrowserSync.
  */
 function browsersync_get_snippet() {
   // Retrieve the BrowserSync config variables.
