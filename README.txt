@@ -7,9 +7,9 @@ snippet at the bottom of the page just before the </body> tag.
 
 Here is an example of the JavaScript snippet required by BrowserSync:
 
-<script src='//127.0.0.1:3001/socket.io/socket.io.js'></script>
-<script>var ___socket___ = io.connect('http://127.0.0.1:3001');</script>
-<script src='//127.0.0.1:3002/client/browser-sync-client.0.9.1.js'></script>
+<script type='text/javascript'>//<![CDATA[
+  document.write("<script async src='//HOST:3000/browser-sync-client.1.2.2.js'></script>".replace(/HOST/g, location.hostname));
+]]></script>
 
 Please note that this module DOES NOT run BrowserSync for you. You will still
 need to run it from the command line.
@@ -20,8 +20,8 @@ CONFIGURATION
 To configure this module you are required to add some configuration variables
 to your settings.php file:
 
-// Version of BrowserSync used (eg. 0.9.1). Optional as of BrowserSync 0.7.0.
-$conf['browsersync_version'] = '0.9.1';
+// Version of BrowserSync used (eg. 1.1.2). Optional as of BrowserSync 1.0.0.
+$conf['browsersync_version'] = '1.1.2';
 
 // Whether the snippet needs be added to non-admin pages.
 $conf['browsersync_enabled_for_nonadmin'] = TRUE;
@@ -33,13 +33,14 @@ $conf['browsersync_enabled_for_admin'] = FALSE;
 // inside the <body> tag.
 $conf['browsersync_snippet_weight'] = 100;
 
-// Host or IP address the BrowserSync socket is running on.
-$conf['browsersync_socket_address'] = '10.0.1.2';
+// Host or IP address the BrowserSync socket is running on. Optional as of
+// BrowserSync 1.0.0.
+$conf['browsersync_socket_address'] = '127.0.0.1';
 
 // Port the BrowserSync socket is running on.
 $conf['browsersync_socket_port'] = '3001';
 
-// Port the BrowserSync client is running on.
+// Port the BrowserSync client is running on. Optional as of BrowserSync 1.0.0.
 $conf['browsersync_client_port'] = '3002';
 
 
