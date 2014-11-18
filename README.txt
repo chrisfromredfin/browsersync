@@ -7,8 +7,8 @@ snippet at the bottom of the page just before the </body> tag.
 
 Here is an example of the JavaScript snippet required by BrowserSync:
 
-<script type='text/javascript'>//<![CDATA[
-  document.write("<script async src='//HOST:3000/browser-sync-client.1.2.2.js'></script>".replace(/HOST/g, location.hostname));
+<script type='text/javascript' id="__bs_script__">//<![CDATA[
+  document.write("<script async src='//HOST:3000/browser-sync/browser-sync-client.1.6.5.js'></script>".replace(/HOST/g, location.hostname).replace(/PORT/g, location.port));
 ]]></script>
 
 Please note that this module DOES NOT run BrowserSync for you. You will still
@@ -20,8 +20,8 @@ CONFIGURATION
 To configure this module you are required to add some configuration variables
 to your settings.php file:
 
-// Version of BrowserSync used (eg. 1.1.2). Optional as of BrowserSync 1.0.0.
-$conf['browsersync_version'] = '1.1.2';
+// Version of BrowserSync used (eg. 1.6.5). Optional as of BrowserSync 1.0.0.
+$conf['browsersync_version'] = '1.6.5';
 
 // Whether the snippet needs be added to non-admin pages.
 $conf['browsersync_enabled_for_nonadmin'] = TRUE;
@@ -42,6 +42,9 @@ $conf['browsersync_socket_port'] = '3001';
 
 // Port the BrowserSync client is running on. Optional as of BrowserSync 1.0.0.
 $conf['browsersync_client_port'] = '3002';
+
+// Path the BrowserSync JavaScript is served from.
+$conf['browsersync_client_path'] = '/browser-sync';
 
 
 INSTALLATION

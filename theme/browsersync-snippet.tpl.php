@@ -9,12 +9,13 @@
  *   on.
  * - $socket_port: The port the BrowserSync socket is running on.
  * - $client_port: The port the BrowserSync client is running on.
+ * - $client_path: The path where the BrowserSync JavaScript is served from.
  * - $version: The version of BrowserSync used.
  */
 ?>
 <?php if ($new_template): ?>
-  <script type='text/javascript'>//<![CDATA[
-    document.write("<script async src='//<?php print $socket_address; ?>:<?php print $socket_port; ?>/browser-sync-client<?php print $version; ?>.js'><\/script>"<?php if ($socket_address == 'HOST'): ?>.replace(/HOST/g, location.hostname)<?php endif; ?>);
+  <script type='text/javascript' id="__bs_script__">//<![CDATA[
+    document.write("<script async src='//<?php print $socket_address; ?>:<?php print $socket_port; ?><?php print $client_path; ?>/browser-sync-client<?php print $version; ?>.js'><\/script>"<?php if ($socket_address == 'HOST'): ?>.replace(/HOST/g, location.hostname)<?php endif; ?><?php if ($socket_port == 'PORT'): ?>.replace(/PORT/g, location.port)<?php endif; ?>);
   //]]></script>
 <?php else: ?>
   <script src='//<?php print $socket_address; ?>:<?php print $socket_port; ?>/socket.io/socket.io.js'></script>

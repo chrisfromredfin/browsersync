@@ -29,6 +29,7 @@ function browsersync_theme($existing, $type, $theme, $path) {
         'socket_address' => NULL,
         'socket_port' => NULL,
         'client_port' => NULL,
+        'client_path' => NULL,
         'version' => NULL,
       ),
       'file' => 'browsersync.theme.inc',
@@ -124,6 +125,7 @@ function browsersync_get_snippet() {
     'socket_address' => variable_get('browsersync_socket_address', 'HOST'),
     'socket_port' => variable_get('browsersync_socket_port', '3000'),
     'client_port' => variable_get('browsersync_client_port'),
+    'client_path' => variable_get('browsersync_client_path', '/browser-sync'),
     'version' => variable_get('browsersync_version'),
   ));
 }

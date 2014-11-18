@@ -11,6 +11,7 @@ function template_preprocess_browsersync_snippet(&$variables) {
   $variables['socket_address'] = check_plain($variables['socket_address']);
   $variables['socket_port'] = check_plain($variables['socket_port']);
   $variables['client_port'] = check_plain($variables['client_port']);
+  $variables['client_path'] = check_plain($variables['client_path']);
   $variables['version'] = check_plain($variables['version']);
 
   // Whether the new snippet template should be used or not.
