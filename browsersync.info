@@ -1,5 +1,4 @@
-name = BrowserSync
-description = Integrates the BrowserSync (Node.js module) with Drupal.
+name = Browsersync
+description = Integrates the Browsersync (Node.js module) with Drupal.
+package = Nodejs
 core = 7.x
-package = "Nodejs"
-project = browsersync

@@ -1,23 +1,34 @@
 <?php
+
 /**
  * @file
- * Code for the BrowserSync module.
+ * Code for the Browsersync module.
  */
 
 /**
- * Implements hook_permission().
+ * Browsersync default host.
  *
- * Ensures the user has permission to use BrowserSync.
+ * @link http://www.browsersync.io/docs/options/#option-host
+ */
+define('BROWSERSYNC_DEFAULT_HOST', 'HOST');
+
+/**
+ * Browsersync default port.
+ *
+ * @link http://www.browsersync.io/docs/options/#option-port
+ */
+define('BROWSERSYNC_DEFAULT_PORT', '3000');
+
+/**
+ * Implements hook_permission().
  */
 function browsersync_permission() {
   return array(
     'use browsersync' => array(
-      'title' => t('Use BrowserSync'),
-      'description' => t('BrowserSync script will only be included for these users.'),
+      'title' => t('Use Browsersync'),
     ),
   );
 }
-
 
 /**
  * Implements hook_theme().
@@ -26,11 +37,8 @@ function browsersync_theme($existing, $type, $theme, $path) {
   return array(
     'browsersync_snippet' => array(
       'variables' => array(
-        'socket_address' => NULL,
-        'socket_port' => NULL,
-        'client_port' => NULL,
-        'client_path' => NULL,
-        'version' => NULL,
+        'host' => '',
+        'port' => '',
       ),
       'file' => 'browsersync.theme.inc',
       'path' => $path . '/theme',
@@ -39,17 +47,16 @@ function browsersync_theme($existing, $type, $theme, $path) {
   );
 }
 
-
 /**
  * Implements hook_css_alter().
  *
- * BrowserSync does not work with CSS import so we need to force Drupal to embed
+ * Browsersync does not work with CSS import so we need to force Drupal to embed
  * CSS files as <link> elements.
  *
- * @see https://github.com/shakyShane/browser-sync/issues/10
+ * @link https://github.com/shakyShane/browser-sync/issues/10
  */
 function browsersync_css_alter(&$css) {
-  if (browsersync_is_active() && !variable_get('preprocess_css')) {
+  if (browsersync_get_setting('enabled') && !variable_get('preprocess_css')) {
     foreach ($css as $key => $value) {
       // Skip core files.
       $is_core = (strpos($value['data'], 'misc/') === 0 || strpos($value['data'], 'modules/') === 0);
@@ -60,72 +67,110 @@ function browsersync_css_alter(&$css) {
   }
 }
 
+/**
+ * Implements hook_form_system_theme_settings_alter().
+ *
+ * Adds the Browsersync configuration options to the theme settings form.
+ *
+ * @see system_theme_settings()
+ */
+function browsersync_form_system_theme_settings_alter(&$form, &$form_state, $form_id) {
+  // Extract the theme key from the form arguments. If not present, it means
+  // that we are altering the global theme settings form.
+  $args = $form_state['build_info']['args'];
+  $theme_key = !empty($args[0]) ? $args[0] : NULL;
+
+  $form['browsersync'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Browsersync settings',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['browsersync']['browsersync_enabled'] = array(
+    '#title' => 'Enable Browsersync',
+    '#type' => 'checkbox',
+    '#default_value' => browsersync_get_setting('enabled', $theme_key),
+  );
+
+  $form['browsersync']['settings'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      'visible' => array(
+        'input[name="browsersync_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['browsersync']['settings']['browsersync_host'] = array(
+    '#title' => 'Host',
+    '#type' => 'textfield',
+    '#description' => t('Override host detection if you know the correct IP to use.'),
+    '#default_value' => browsersync_get_setting('host', $theme_key),
+  );
+
+  $form['browsersync']['settings']['browsersync_port'] = array(
+    '#title' => 'Port',
+    '#type' => 'textfield',
+    '#description' => t('Use a specific port (instead of the one auto-detected by Browsersync).'),
+    '#default_value' => browsersync_get_setting('port', $theme_key),
+  );
+}
 
 /**
  * Implements hook_page_build().
  *
- * We are using this hook to add the BrowserSync snippet to the bottom of the
- * page.
+ * Adds the Browsersync snippet to the bottom of the page.
  */
 function browsersync_page_build(&$page) {
-  $page['page_bottom']['browsersync'] = array(
-    '#markup' => browsersync_get_snippet(),
-    '#weight' => variable_get('browsersync_snippet_weight', 100),
-    '#access' => browsersync_is_active(),
-  );
+  if (browsersync_get_setting('enabled') && user_access('use browsersync')) {
+    $page['page_bottom']['browsersync'] = array(
+      '#theme' => 'browsersync_snippet',
+      '#host' => browsersync_get_setting('host'),
+      '#port' => browsersync_get_setting('port'),
+      '#weight' => 100,
+    );
+  }
 }
 
-
 /**
- * Returns whether BrowserSync is enabled for a given path.
+ * Retrieves a setting for the current theme or for a given theme.
  *
- * @param string $path
- *   (optional) The path to check (defaults to the current path).
+ * @param $setting_name
+ *   The name of the setting to be retrieved.
+ * @param $theme
+ *   (optional) The name of a given theme. Defaults to the current theme.
  *
- * @return bool
- *   TRUE or FALSE, depending on whether BrowserSync is enabled.
+ * @return mixed
+ *   The value of the requested setting or NULL if the setting does not exist.
+ *
+ * @see theme_get_setting()
  */
-function browsersync_is_enabled($path = '') {
-  // Define a fallback for the path.
-  if ($path == '') {
-    $path = current_path();
+function browsersync_get_setting($setting_name, $theme = NULL) {
+  $cache = &drupal_static(__FUNCTION__, array());
+
+  if (!isset($theme)) {
+    $theme = !empty($GLOBALS['theme_key']) ? $GLOBALS['theme_key'] : '';
   }
 
-  // Determine whether BrowserSync is enabled.
-  if (path_is_admin($path)) {
-    $status = variable_get('browsersync_enabled_for_admin', FALSE);
+  if (empty($cache[$theme])) {
+    // Set the default values for each global setting.
+    $cache[$theme] = array(
+      'browsersync_enabled' => 0,
+      'browsersync_host' =>  '',
+      'browsersync_port' =>  '',
+    );
   }
-  else {
-    $status = variable_get('browsersync_enabled_for_nonadmin', FALSE);
+
+  // Get the saved global settings from the database.
+  $cache[$theme] = array_merge($cache[$theme], variable_get('theme_settings', array()));
+
+  if ($theme) {
+    // Get the saved theme-specific settings from the database.
+    $cache[$theme] = array_merge($cache[$theme], variable_get('theme_' . $theme . '_settings', array()));
   }
 
-  return $status;
-}
+  $setting_name = 'browsersync_' . $setting_name;
 
-
-/**
- * Determines access for the use of BrowserSync.
- *
- * @param string $path
- *   (optional) The path to check (defaults to the current path).
- *
- * @return bool
- *   TRUE or FALSE, depending on whether BrowserSync is active.
- */
-function browsersync_is_active($path = '') {
-  return user_access('use browsersync') && browsersync_is_enabled($path);
-}
-
-
-/**
- * Returns a snippet as required by BrowserSync.
- */
-function browsersync_get_snippet() {
-  return theme('browsersync_snippet', array(
-    'socket_address' => variable_get('browsersync_socket_address', 'HOST'),
-    'socket_port' => variable_get('browsersync_socket_port', '3000'),
-    'client_port' => variable_get('browsersync_client_port'),
-    'client_path' => variable_get('browsersync_client_path', '/browser-sync'),
-    'version' => variable_get('browsersync_version'),
-  ));
+  return isset($cache[$theme][$setting_name]) ? $cache[$theme][$setting_name] : NULL;
 }
