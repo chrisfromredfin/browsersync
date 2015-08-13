@@ -2,3 +2,4 @@ name = Browsersync
 description = Integrates the Browsersync (Node.js module) with Drupal.
 package = Nodejs
 core = 7.x
+files[] = browsersync.test
