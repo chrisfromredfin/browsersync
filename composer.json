@@ -1,0 +1,7 @@
+{
+    "name": "chrisfromredfin/browsersync",
+    "description": "Browsersync module, ported to Drupal 9.",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "type": "drupal-module"
+}
